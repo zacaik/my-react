@@ -1,0 +1,12 @@
+{
+	"name": "shared",
+	"version": "1.0.0",
+	"description": "react 公用的工具函数及类型定义",
+	"module": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC"
+}
