@@ -45,5 +45,10 @@ export function getPackageJSON(name) {
  */
 export function getCommonPlugins(config) {
 	const { typescript = {} } = config || {};
-	return [cjs(), ts(typescript)];
+	return [
+		// 将 cjs 模块转换为 es 模块
+		cjs(),
+		// 将 ts 转换为 js
+		ts(typescript)
+	];
 }
