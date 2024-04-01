@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      react:
+        specifier: link:E:/front_end/my-react/dist/node_modules/react
+        version: link:dist/node_modules/react
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^25.0.7

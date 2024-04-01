@@ -34,7 +34,7 @@ const ReactElement = (type: Type, key: any, ref: Ref, props: Props) => {
  * @param config 元素属性
  * @param maybeChildren 子元素
  */
-export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
+const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 	let key: Key = null;
 	let ref: Ref = null;
 	const props: Props = {};
@@ -63,3 +63,28 @@ export const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 
 	return ReactElement(type, key, ref, props);
 };
+
+const jsxDEV = (type: ElementType, config: any) => {
+	let key: Key = null;
+	let ref: Ref = null;
+	const props: Props = {};
+	for (const prop in config) {
+		if (Object.prototype.hasOwnProperty.call(config, prop)) {
+			const val = config[prop];
+			if (prop === 'key') {
+				key = val;
+				continue;
+			}
+			if (prop === 'ref') {
+				ref = val;
+				continue;
+			}
+			props[prop] = val;
+		}
+	}
+
+	return ReactElement(type, key, ref, props);
+};
+
+// 必须要导出 jsxDEV，开发环境下，jsx 代码会被编译成 import {jsxDEV as _jsx} from 'react/jsx-runtime';
+export { jsx, jsxDEV };
