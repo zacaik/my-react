@@ -41,6 +41,7 @@ function completeUnitOfWork(fiber: FiberNode) {
 		if (sibling !== null) {
 			// 如果有兄弟节点，继续遍历兄弟节点
 			workInProgress = sibling;
+			return;
 		} else {
 			// 如果没有兄弟节点，就返回父节点继续遍历
 			node = node.return;
