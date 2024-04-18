@@ -18,3 +18,9 @@ export interface ReactElementType {
 	 */
 	__mark: string;
 }
+
+/**
+ * 用于描述组件更新时的动作，如 setState 接受的参数的类型
+ * setState({ age: 1 }) | setState((state) => {...state, age: 1})
+ */
+export type Action<State> = State | ((prevState: State) => State);
