@@ -1,17 +1,20 @@
 import { Key, Props, Ref } from 'shared/ReactTypes';
 import { Flags, NoFlags } from './fiberFlags';
+import { Container } from 'hostConfig';
 import { WorkTag } from './workTag';
 
 export class FiberNode {
 	/**
 	 * 用来标记不同类型的 fiber 节点
 	 * 比如 0 代表这个 fiber 节点对应的是一个 FunctionComponent
+	 * 对于 hostRootFiber，它的 workTag 就是 HostRoot，3
 	 */
 	tag: WorkTag;
 	/**
 	 * 更细粒度的 fiber 节点的类型
 	 * 对于 FunctionComponent, type 是函数本身
 	 * 对于 HostComponent, type 是标签名
+	 * 对于 hostRootFiber, type 的值是 "root"
 	 */
 	type: any;
 	/**
@@ -61,6 +64,10 @@ export class FiberNode {
 	 * 表示当前节点的状态和对应的操作，比如更新、插入或删除
 	 */
 	flags: Flags;
+	/**
+	 * 当前 fiberNode 的更新队列
+	 */
+	updateQueue: unknown;
 
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
@@ -76,5 +83,27 @@ export class FiberNode {
 		this.memoizedProps = null;
 		this.alternate = null;
 		this.flags = NoFlags;
+	}
+}
+
+export class FiberRootNode {
+	/**
+	 * 指向当前应用程序在宿主环境的根元素
+	 * 在浏览器中，指向根 DOM 元素
+	 */
+	container: Container;
+	/**
+	 * 指向应用程序根节点所对应的 fiberNode，被称作 hostRootFiber
+	 */
+	current: FiberNode;
+	/**
+	 * 指向最近一次完成递归更新操作的 hostRootFiber
+	 */
+	finishedWork: FiberNode | null;
+	constructor(container: Container, hostRootFiber: FiberNode) {
+		this.container = container;
+		this.current = hostRootFiber;
+		this.finishedWork = null;
+		hostRootFiber.stateNode = this;
 	}
 }
