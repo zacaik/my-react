@@ -7,6 +7,7 @@ import {
 	enqueueUpdate,
 	UpdateQueue
 } from './updateQueue';
+import { scheduleUpdateOnFiber } from './workLoop';
 import { HostRoot } from './workTag';
 
 /**
@@ -32,9 +33,12 @@ export function updateContainer(
 ) {
 	const hostRootFiber = root.current;
 	const update = createUpdate<ReactElementType | null>(element);
+	// 将更新对象添加到更新队列
 	enqueueUpdate(
 		hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
 		update
 	);
+	// 协调阶段，消费队列中的更新对象
+	scheduleUpdateOnFiber(hostRootFiber);
 	return element;
 }

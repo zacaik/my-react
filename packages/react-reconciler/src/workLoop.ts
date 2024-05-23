@@ -1,12 +1,46 @@
 import { beginWork } from './beginWork';
 import { completeWork } from './completeWork';
-import { FiberNode } from './fiber';
+import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber';
+import { HostRoot } from './workTag';
 
 // 指向当前正在工作的 fiberNode
 let workInProgress: FiberNode | null = null;
 
-function renderRoot(root: FiberNode) {
-	workInProgress = root;
+/**
+ * 执行协调
+ * @param fiber 触发更新的 fiber 节点
+ */
+export function scheduleUpdateOnFiber(fiber: FiberNode) {
+	// react 的协调阶段总是从 fiberRootNode 开始的
+	const root = markUpdateFromFiberToRoot(fiber);
+	// TODO: 协调阶段具体怎么执行
+	if (root) {
+		renderRoot(root);
+	}
+}
+
+function markUpdateFromFiberToRoot(fiber: FiberNode): FiberRootNode | null {
+	let node = fiber;
+	let parent = node.return;
+	while (parent !== null) {
+		node = parent;
+		parent = node.return;
+	}
+	if (node.tag === HostRoot) {
+		// 返回 fiberRootNode
+		return node.stateNode;
+	}
+	return null;
+}
+
+function prepareFreshStack(root: FiberRootNode) {
+	// 创建双缓存树
+	workInProgress = createWorkInProgress(root.current, {});
+}
+
+function renderRoot(root: FiberRootNode) {
+	prepareFreshStack(root);
+
 	try {
 		workLoop();
 	} catch (error) {
@@ -17,6 +51,7 @@ function renderRoot(root: FiberNode) {
 
 function workLoop() {
 	while (workInProgress !== null) {
+		// 以当前 wip 节点开始进行 render
 		performUnitOfWork(workInProgress);
 	}
 }

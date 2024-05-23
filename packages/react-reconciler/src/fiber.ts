@@ -56,6 +56,10 @@ export class FiberNode {
 	 */
 	memoizedProps: Props | null;
 	/**
+	 * 存储组件当前的状态
+	 */
+	memoizedState: any;
+	/**
 	 * 表示当前节点的替代节点，如果当前节点是 current 节点，则指向 WIP 节点，如果当前节点是 WIP 节点，则指向 current 节点
 	 * 用于实现双缓存替换
 	 */
@@ -83,6 +87,7 @@ export class FiberNode {
 		this.memoizedProps = null;
 		this.alternate = null;
 		this.flags = NoFlags;
+		this.memoizedState = null;
 	}
 }
 
@@ -106,4 +111,32 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		hostRootFiber.stateNode = this;
 	}
+}
+
+/**
+ * 创建当前 hostRootFiber 对应的双缓存树的 hostRootFiber
+ * @param current 当前 hostRootFiber
+ * @param pendingProps 当前 hostRootFiber 的 props
+ * @returns 对应的双缓存树的 hostRootFiber
+ */
+export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
+	let wip = current.alternate;
+	if (wip === null) {
+		// 如果当前 hostRootFiber 没有 alternate，则说明是挂载阶段
+		wip = new FiberNode(current.tag, pendingProps, current.key);
+		wip.stateNode = current.stateNode;
+		wip.alternate = current;
+		current.alternate = wip;
+	} else {
+		// 否则，则是更新流程
+		wip.pendingProps = current.pendingProps;
+		// 清除上次更新的标记
+		wip.flags = NoFlags;
+	}
+	wip.tag = current.type;
+	wip.updateQueue = current.updateQueue;
+	wip.child = current.child;
+	wip.memoizedProps = current.memoizedProps;
+	wip.memoizedState = current.memoizedState;
+	return wip;
 }
