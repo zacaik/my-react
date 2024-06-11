@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import ts from 'rollup-plugin-typescript2';
 import cjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
 
 // packages 所在路径
 const pkgPath = path.resolve(__dirname, '../../packages');
@@ -44,8 +45,15 @@ export function getPackageJSON(name) {
  * @returns 公共插件
  */
 export function getCommonPlugins(config) {
-	const { typescript = {} } = config || {};
+	const {
+		typescript = {},
+		alias = {
+			__DEV__: true
+		}
+	} = config || {};
 	return [
+		// 注入全局变量
+		replace(alias),
 		// 将 cjs 模块转换为 es 模块
 		cjs(),
 		// 将 ts 转换为 js
