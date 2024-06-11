@@ -1,7 +1,7 @@
-import { Key, Props, Ref } from 'shared/ReactTypes';
+import { Key, Props, ReactElementType, Ref } from 'shared/ReactTypes';
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
-import { WorkTag } from './workTag';
+import { FunctionComponent, HostComponent, WorkTag } from './workTag';
 
 export class FiberNode {
 	/**
@@ -122,7 +122,7 @@ export class FiberRootNode {
 export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
 	let wip = current.alternate;
 	if (wip === null) {
-		// 如果当前 hostRootFiber 没有 alternate，则说明是挂载阶段
+		// 如果当前 hostRootFiber 没有 alternate，则说明是 mount 阶段
 		wip = new FiberNode(current.tag, pendingProps, current.key);
 		wip.stateNode = current.stateNode;
 		wip.alternate = current;
@@ -139,4 +139,23 @@ export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
 	wip.memoizedProps = current.memoizedProps;
 	wip.memoizedState = current.memoizedState;
 	return wip;
+}
+
+/**
+ * 根据对象类型的 ReactElement 创建 fiberNode
+ * @param element 对应的 ReactElement
+ * @returns 创建的对应的 fiberNode
+ */
+export function createFiberFromElement(element: ReactElementType): FiberNode {
+	const { type, key, props } = element;
+	let fiberTag: WorkTag = FunctionComponent;
+	if (typeof type === 'string') {
+		// 对于 DOM 元素对应的 ReactElement，其 type 的值就是标签名
+		fiberTag = HostComponent;
+	} else if (typeof type !== 'function' && __DEV__) {
+		console.warn('unexpected type', element);
+	}
+	const fiber = new FiberNode(fiberTag, props, key);
+	fiber.type = type;
+	return fiber;
 }
