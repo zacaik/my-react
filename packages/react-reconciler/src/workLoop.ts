@@ -49,6 +49,10 @@ function renderRoot(root: FiberRootNode) {
 		}
 		workInProgress = null;
 	}
+
+	const finishedWork = root.current.alternate;
+	root.finishedWork = finishedWork;
+	// commitWork(finishedWork);
 }
 
 function workLoop() {

@@ -69,6 +69,10 @@ export class FiberNode {
 	 */
 	flags: Flags;
 	/**
+	 * 当前节点子树的 flags
+	 */
+	subtreeFlags: Flags;
+	/**
 	 * 当前 fiberNode 的更新队列
 	 */
 	updateQueue: unknown;
@@ -87,6 +91,7 @@ export class FiberNode {
 		this.memoizedProps = null;
 		this.alternate = null;
 		this.flags = NoFlags;
+		this.subtreeFlags = NoFlags;
 		this.memoizedState = null;
 	}
 }
@@ -132,6 +137,7 @@ export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
 		wip.pendingProps = current.pendingProps;
 		// 清除上次更新的标记
 		wip.flags = NoFlags;
+		wip.subtreeFlags = NoFlags;
 	}
 	wip.tag = current.type;
 	wip.updateQueue = current.updateQueue;
