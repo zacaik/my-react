@@ -1,6 +1,7 @@
 import { beginWork } from './beginWork';
 import { completeWork } from './completeWork';
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber';
+import { MutationMask, NoFlags } from './fiberFlags';
 import { HostRoot } from './workTag';
 
 // 指向当前正在工作的 fiberNode
@@ -52,7 +53,32 @@ function renderRoot(root: FiberRootNode) {
 
 	const finishedWork = root.current.alternate;
 	root.finishedWork = finishedWork;
-	// commitWork(finishedWork);
+	commitWork(root);
+}
+
+function commitWork(root: FiberRootNode) {
+	const finishedWork = root.finishedWork;
+
+	if (!finishedWork) {
+		return;
+	}
+
+	if (__DEV__) {
+		console.warn('commit begin', finishedWork);
+	}
+
+	root.finishedWork = null;
+
+	const subtreeHasEffect =
+		(finishedWork.subtreeFlags & MutationMask) !== NoFlags;
+	const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+
+	// 判断当前子树下是否有副作用
+	if (subtreeHasEffect || rootHasEffect) {
+		root.current = finishedWork;
+	} else {
+		root.current = finishedWork;
+	}
 }
 
 function workLoop() {
