@@ -17,3 +17,9 @@ export const appendInitialChild = (...args: any) => {
 		...args
 	};
 };
+
+export const appendPlacementNodeIntoContainer = (...args: any) => {
+	return {
+		...args
+	};
+};

@@ -1,4 +1,4 @@
-import { appendInitialChild, createInstance } from 'hostConfig';
+import { Container, appendInitialChild, createInstance } from 'hostConfig';
 import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText } from './workTag';
 import { NoFlags } from './fiberFlags';
@@ -18,6 +18,7 @@ export const completeWork = (wip: FiberNode) => {
 			} else {
 				// mount
 				const instance = createInstance(wip.type, newProps);
+				// wip.stateNode = instance
 				appendAllChildren(instance, wip);
 			}
 			/**
@@ -50,7 +51,7 @@ export const completeWork = (wip: FiberNode) => {
  * @param parent 当前 wip 对应的 DOM 节点
  * @param wip 当前 wip
  */
-function appendAllChildren(parent: any, wip: FiberNode) {
+function appendAllChildren(parent: Container, wip: FiberNode) {
 	let node = wip.child;
 
 	/**

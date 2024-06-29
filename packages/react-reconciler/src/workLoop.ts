@@ -1,4 +1,5 @@
 import { beginWork } from './beginWork';
+import { commitMutationEffects } from './commitWork';
 import { completeWork } from './completeWork';
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber';
 import { MutationMask, NoFlags } from './fiberFlags';
@@ -53,10 +54,10 @@ function renderRoot(root: FiberRootNode) {
 
 	const finishedWork = root.current.alternate;
 	root.finishedWork = finishedWork;
-	commitWork(root);
+	commitRoot(root);
 }
 
-function commitWork(root: FiberRootNode) {
+function commitRoot(root: FiberRootNode) {
 	const finishedWork = root.finishedWork;
 
 	if (!finishedWork) {
@@ -75,6 +76,10 @@ function commitWork(root: FiberRootNode) {
 
 	// 判断当前子树下是否有副作用
 	if (subtreeHasEffect || rootHasEffect) {
+		// mutation 阶段
+		commitMutationEffects(finishedWork);
+
+		// 双缓存树切换
 		root.current = finishedWork;
 	} else {
 		root.current = finishedWork;
