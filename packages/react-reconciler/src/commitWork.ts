@@ -1,7 +1,7 @@
-import { Container, appendPlacementNodeIntoContainer } from 'hostConfig';
+import { Container, appendChildToContainer } from 'hostConfig';
 import { FiberNode } from './fiber';
 import { MutationMask, NoFlags, Placement } from './fiberFlags';
-import { HostComponent, HostRoot } from './workTag';
+import { HostComponent, HostRoot, HostText } from './workTag';
 
 let nextEffect: FiberNode | null = null;
 
@@ -79,4 +79,25 @@ function getHostParent(fiber: FiberNode): Container | null {
 		console.warn('host parent not found');
 	}
 	return null;
+}
+
+function appendPlacementNodeIntoContainer(
+	finishedWork: FiberNode,
+	hostParent: Container
+) {
+	// fiber host
+	if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
+		appendChildToContainer(hostParent, finishedWork.stateNode);
+		return;
+	}
+	const child = finishedWork.child;
+	if (child !== null) {
+		appendPlacementNodeIntoContainer(child, hostParent);
+		let sibling = child.sibling;
+
+		while (sibling !== null) {
+			appendPlacementNodeIntoContainer(sibling, hostParent);
+			sibling = sibling.sibling;
+		}
+	}
 }

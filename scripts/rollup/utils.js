@@ -48,7 +48,8 @@ export function getCommonPlugins(config) {
 	const {
 		typescript = {},
 		alias = {
-			__DEV__: true
+			__DEV__: true,
+			preventAssignment: true
 		}
 	} = config || {};
 	return [

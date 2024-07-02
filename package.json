@@ -6,7 +6,7 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"lint": "eslint --ext .ts,.js,.jsx,.tsx --fix --quiet",
-		"build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/react.config.js "
+		"build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js "
 	},
 	"keywords": [],
 	"author": "",
@@ -30,6 +30,7 @@
 		"typescript": "^5.4.3"
 	},
 	"dependencies": {
+		"@rollup/plugin-alias": "^5.1.0",
 		"@rollup/plugin-replace": "^5.0.5"
 	}
 }
