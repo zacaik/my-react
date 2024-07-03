@@ -139,7 +139,7 @@ export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
 		wip.flags = NoFlags;
 		wip.subtreeFlags = NoFlags;
 	}
-	wip.tag = current.type;
+	wip.tag = current.tag;
 	wip.updateQueue = current.updateQueue;
 	wip.child = current.child;
 	wip.memoizedProps = current.memoizedProps;

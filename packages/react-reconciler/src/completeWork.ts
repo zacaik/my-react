@@ -1,4 +1,9 @@
-import { Container, appendInitialChild, createInstance } from 'hostConfig';
+import {
+	Container,
+	appendInitialChild,
+	createInstance,
+	createTextInstance
+} from 'hostConfig';
 import { FiberNode } from './fiber';
 import { HostComponent, HostRoot, HostText } from './workTag';
 import { NoFlags } from './fiberFlags';
@@ -18,8 +23,8 @@ export const completeWork = (wip: FiberNode) => {
 			} else {
 				// mount
 				const instance = createInstance(wip.type, newProps);
-				// wip.stateNode = instance
 				appendAllChildren(instance, wip);
+				wip.stateNode = instance;
 			}
 			/**
 			 * 在 completeWork 阶段，react 会将子树中的 flag 冒泡到当前节点
@@ -28,8 +33,17 @@ export const completeWork = (wip: FiberNode) => {
 			bubbleProperties(wip);
 			return null;
 		case HostText:
+			if (current !== null && wip.stateNode) {
+				// update
+			} else {
+				// 1. 构建DOM
+				const instance = createTextInstance(newProps.content);
+				wip.stateNode = instance;
+			}
+			bubbleProperties(wip);
 			return null;
 		case HostRoot:
+			bubbleProperties(wip);
 			return null;
 		default:
 			if (__DEV__) {

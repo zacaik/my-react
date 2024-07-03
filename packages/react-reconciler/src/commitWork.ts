@@ -23,14 +23,14 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
 				// 判断当前节点是否有副作用，如果有，则处理副作用
 				commitMutationEffectOnFiber(nextEffect);
 				// 继续遍历兄弟节点
-				const sibling = nextEffect.sibling;
+				const sibling: FiberNode | null = nextEffect.sibling;
 				if (sibling !== null) {
 					nextEffect = sibling;
 					break up;
 				}
+				// 继续遍历父节点
+				nextEffect = nextEffect.return;
 			}
-			// 继续遍历父节点
-			nextEffect = nextEffect.return;
 		}
 	}
 };
