@@ -3,6 +3,7 @@
  * ReactDOM.createRoot().render setState 等 API 将接入这个 update 机制
  */
 
+import { Dispatch } from 'react/src/currentDispatcher';
 import { Action } from 'shared/ReactTypes';
 
 // 用于描述一次组件的更新
@@ -16,6 +17,7 @@ export interface UpdateQueue<State> {
 		// 将要更新的状态
 		pending: Update<State> | null;
 	};
+	dispatch: Dispatch<State> | null;
 }
 
 export const createUpdate = <State>(action: Action<State>): Update<State> => {
@@ -24,12 +26,13 @@ export const createUpdate = <State>(action: Action<State>): Update<State> => {
 	};
 };
 
-export const createUpdateQueue = () => {
+export const createUpdateQueue = <State>() => {
 	return {
 		shared: {
 			pending: null
-		}
-	};
+		},
+		dispatch: null
+	} as UpdateQueue<State>;
 };
 
 export const enqueueUpdate = <State>(
