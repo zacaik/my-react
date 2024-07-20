@@ -8,7 +8,7 @@ import {
 import generatePackageJson from 'rollup-plugin-generate-package-json';
 
 // react-dom 包的入口文件地址
-const { module } = getPackageJSON('react-dom');
+const { module, peerDependencies } = getPackageJSON('react-dom');
 
 // react-dom 包的所在路径
 const pkgPath = getPkgPath('react-dom');
@@ -21,24 +21,26 @@ export default [
 	{
 		input: `${pkgPath}/${module}`,
 		output: [
-            {
-                file: `${pkgDistPath}/index.js`,
-                name: 'index.js',
-                format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
-            },
-            {
-                file: `${pkgDistPath}/client.js`,
-                name: 'client.js',
-                format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
-            }
-        ],
+			{
+				file: `${pkgDistPath}/index.js`,
+				name: 'index.js',
+				format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
+			},
+			{
+				file: `${pkgDistPath}/client.js`,
+				name: 'client.js',
+				format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
+			}
+		],
+		// 不要把 react 的代码打包进来
+		external: [...Object.keys(peerDependencies)],
 		plugins: [
 			...getCommonPlugins(),
-            alias({
-                entries: {
-                    hostConfig: `${pkgPath}/src/hostConfig.ts`
-                }
-            }),
+			alias({
+				entries: {
+					hostConfig: `${pkgPath}/src/hostConfig.ts`
+				}
+			}),
 			// 为构建出的包生成 package.json
 			generatePackageJson({
 				inputFolder: pkgPath, // 输入目录
@@ -48,13 +50,13 @@ export default [
 						name,
 						description,
 						version,
-                        peerDependencies: {
-                            react: version,
-                        },
+						peerDependencies: {
+							react: version
+						},
 						main: 'index.js' // cjs umd 模块的入口文件
 					};
 				}
 			})
 		]
-	},
+	}
 ];
