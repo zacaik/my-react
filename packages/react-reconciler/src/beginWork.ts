@@ -1,8 +1,14 @@
 import { ReactElementType } from 'shared/ReactTypes';
 import { FiberNode } from './fiber';
 import { UpdateQueue, processUpdateQueue } from './updateQueue';
-import { HostComponent, HostRoot, HostText } from './workTag';
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './workTag';
 import { mountChildFibers, reconcileChildrenFibers } from './childFibers';
+import { renderWithHooks } from './fiberHooks';
 
 /**
  * React 会用 DFS 来处理组件树中的节点，beginWork 是 DFS 的递阶段
@@ -16,6 +22,8 @@ export const beginWork = (wip: FiberNode) => {
 		case HostText:
 			// 文本类节点是叶子节点，返回 null，返回上级继续进行 DFS
 			return null;
+		case FunctionComponent:
+			return updateFunctionComponent(wip);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork 未实现的 tag');
@@ -46,6 +54,12 @@ function updateHostRoot(wip: FiberNode) {
 function updateHostComponent(wip: FiberNode) {
 	const nextProps = wip.pendingProps;
 	const nextChildren = nextProps.children;
+	reconcileChildren(wip, nextChildren);
+	return wip.child;
+}
+
+function updateFunctionComponent(wip: FiberNode) {
+	const nextChildren = renderWithHooks(wip);
 	reconcileChildren(wip, nextChildren);
 	return wip.child;
 }
