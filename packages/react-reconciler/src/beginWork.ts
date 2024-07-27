@@ -35,15 +35,15 @@ export const beginWork = (wip: FiberNode) => {
 
 function updateHostRoot(wip: FiberNode) {
 	// 获取更新前的状态
-	const baseState = wip.memoizedState;
+	const baseState = wip.memorizedState;
 	const updateQueue = wip.updateQueue as UpdateQueue<ReactElementType>;
 	const pending = updateQueue.shared.pending;
 	updateQueue.shared.pending = null;
 	// 获取更新后的状态
-	const { memoizedState } = processUpdateQueue(baseState, pending);
-	wip.memoizedState = memoizedState;
+	const { memorizedState } = processUpdateQueue(baseState, pending);
+	wip.memorizedState = memorizedState;
 
-	const nextChildren = wip.memoizedState; // hostRootFiber 更新后的 state 就是 hostRootFiber 的子节点对应的 ReactElement
+	const nextChildren = wip.memorizedState; // hostRootFiber 更新后的 state 就是 hostRootFiber 的子节点对应的 ReactElement
 
 	// 现在要把这个 ReactElement 转换成 FiberNode
 	reconcileChildren(wip, nextChildren);

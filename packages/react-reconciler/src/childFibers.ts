@@ -1,7 +1,11 @@
-import { ReactElementType } from 'shared/ReactTypes';
-import { FiberNode, createFiberFromElement } from './fiber';
+import { Props, ReactElementType } from 'shared/ReactTypes';
+import {
+	FiberNode,
+	createFiberFromElement,
+	createWorkInProgress
+} from './fiber';
 import { HostText } from './workTag';
-import { Placement } from './fiberFlags';
+import { ChildDeletion, Placement } from './fiberFlags';
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbol';
 
 /**
@@ -9,11 +13,49 @@ import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbol';
  * @param shouldTrackEffect 是否跟踪副作用。mount 场景下，只对 hostRootFiber 的子节点打上 flags，这样只会执行一次 DOM 插入操作，优化性能。
  */
 function ChildReconciler(shouldTrackEffect: boolean) {
+	function deleteChild(returnFiber: FiberNode, childToDelete: FiberNode) {
+		if (!shouldTrackEffect) {
+			return;
+		}
+		const deletions = returnFiber.deletions;
+		if (deletions === null) {
+			returnFiber.deletions = [childToDelete];
+			returnFiber.flags |= ChildDeletion;
+		} else {
+			deletions.push(childToDelete);
+		}
+	}
+
 	function reconcileSingleElement(
 		returnFiber: FiberNode,
 		currentFiber: FiberNode | null,
 		element: ReactElementType
 	) {
+		const key = element.key;
+		if (currentFiber !== null) {
+			// update
+			if (currentFiber.key === key) {
+				// key 相同
+				if (element.$$typeof === REACT_ELEMENT_TYPE) {
+					// 是 react element
+					if (currentFiber.type === element.type) {
+						// type 相同,复用旧节点
+						const existing = useFiber(currentFiber, element.props);
+						existing.return = returnFiber;
+						return existing;
+					}
+					// 不是 react element，删除旧节点
+					deleteChild(returnFiber, currentFiber);
+				} else {
+					if (__DEV__) {
+						console.warn('unexpected react element type', element.$$typeof);
+					}
+				}
+			} else {
+				// key 不同,删掉旧节点
+				deleteChild(returnFiber, currentFiber);
+			}
+		}
 		const fiber = createFiberFromElement(element);
 		fiber.return = returnFiber;
 		return fiber;
@@ -24,6 +66,16 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 		currentFiber: FiberNode | null,
 		content: string | number
 	) {
+		if (currentFiber !== null) {
+			if (currentFiber.tag === HostText) {
+				// 类型没变，仍然是文字
+				const existing = useFiber(currentFiber, { content });
+				existing.return = returnFiber;
+				return existing;
+			}
+			// 类型变了，删除旧节点
+			deleteChild(returnFiber, currentFiber);
+		}
 		const fiber = new FiberNode(HostText, { content }, null);
 		fiber.return = returnFiber;
 		return fiber;
@@ -61,6 +113,11 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 			);
 		}
 
+		if (currentFiber) {
+			// 兜底删除
+			deleteChild(returnFiber, currentFiber);
+		}
+
 		// TODO: 多节点场景的实现
 		if (__DEV__) {
 			console.warn('暂未实现的 reconcile 类型', newChild);
@@ -68,6 +125,15 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 
 		return null;
 	};
+}
+
+// fiberNode 的复用
+function useFiber(fiber: FiberNode, pendingProps: Props): FiberNode {
+	// 对于同一个 fiberNode，它的复用指的是使用它在双缓存树中对应的节点
+	const clone = createWorkInProgress(fiber, pendingProps);
+	clone.index = 0;
+	clone.sibling = null;
+	return clone;
 }
 
 export const reconcileChildrenFibers = ChildReconciler(true);

@@ -54,11 +54,11 @@ export class FiberNode {
 	/**
 	 * 组件更新后，对应的 ReactElement 的 props 的值，用于比较新旧 props
 	 */
-	memoizedProps: Props | null;
+	memorizedProps: Props | null;
 	/**
 	 * 存储组件当前的状态
 	 */
-	memoizedState: any;
+	memorizedState: any;
 	/**
 	 * 表示当前节点的替代节点，如果当前节点是 current 节点，则指向 WIP 节点，如果当前节点是 WIP 节点，则指向 current 节点
 	 * 用于实现双缓存替换
@@ -76,6 +76,10 @@ export class FiberNode {
 	 * 当前 fiberNode 的更新队列
 	 */
 	updateQueue: unknown;
+	/**
+	 * 当前节点待删除的子节点列表
+	 */
+	deletions: FiberNode[] | null;
 
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
@@ -88,11 +92,12 @@ export class FiberNode {
 		this.index = 0;
 		this.ref = null;
 		this.pendingProps = pendingProps;
-		this.memoizedProps = null;
+		this.memorizedProps = null;
 		this.alternate = null;
 		this.flags = NoFlags;
 		this.subtreeFlags = NoFlags;
-		this.memoizedState = null;
+		this.memorizedState = null;
+		this.deletions = null;
 	}
 }
 
@@ -134,16 +139,17 @@ export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
 		current.alternate = wip;
 	} else {
 		// 否则，则是更新流程
-		wip.pendingProps = current.pendingProps;
+		wip.pendingProps = pendingProps;
 		// 清除上次更新的标记
 		wip.flags = NoFlags;
 		wip.subtreeFlags = NoFlags;
+		wip.deletions = null;
 	}
-	wip.tag = current.tag;
+	wip.type = current.type;
 	wip.updateQueue = current.updateQueue;
 	wip.child = current.child;
-	wip.memoizedProps = current.memoizedProps;
-	wip.memoizedState = current.memoizedState;
+	wip.memorizedProps = current.memorizedProps;
+	wip.memorizedState = current.memorizedState;
 	return wip;
 }
 
