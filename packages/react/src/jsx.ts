@@ -29,6 +29,18 @@ const ReactElement = (type: Type, key: any, ref: Ref, props: Props) => {
 };
 
 /**
+ * 判断目标元素是否是合法的 react element
+ * @param object 目标元素
+ */
+export function isValidElement(object: any) {
+	return (
+		typeof object === 'object' &&
+		object !== null &&
+		object.$$typeof === REACT_ELEMENT_TYPE
+	);
+}
+
+/**
  * 创建 react element
  * @param type 元素类型
  * @param config 元素属性
@@ -42,11 +54,15 @@ const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 		if (Object.prototype.hasOwnProperty.call(config, prop)) {
 			const val = config[prop];
 			if (prop === 'key') {
-				key = val;
+				if (val !== undefined) {
+					key = String(val);
+				}
 				continue;
 			}
 			if (prop === 'ref') {
-				ref = val;
+				if (val !== undefined) {
+					ref = val;
+				}
 				continue;
 			}
 			props[prop] = val;
@@ -72,11 +88,15 @@ const jsxDEV = (type: ElementType, config: any) => {
 		if (Object.prototype.hasOwnProperty.call(config, prop)) {
 			const val = config[prop];
 			if (prop === 'key') {
-				key = val;
+				if (val !== undefined) {
+					key = String(val);
+				}
 				continue;
 			}
 			if (prop === 'ref') {
-				ref = val;
+				if (val !== undefined) {
+					ref = val;
+				}
 				continue;
 			}
 			props[prop] = val;

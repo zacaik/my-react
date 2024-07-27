@@ -17,18 +17,18 @@ const pkgPath = getPkgPath('react-dom');
 const pkgDistPath = getPkgDistPath('react-dom');
 
 export default [
-	// react
+	// react-dom
 	{
 		input: `${pkgPath}/${module}`,
 		output: [
 			{
 				file: `${pkgDistPath}/index.js`,
-				name: 'index.js',
+				name: 'ReactDOM',
 				format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
 			},
 			{
 				file: `${pkgDistPath}/client.js`,
-				name: 'client.js',
+				name: 'client',
 				format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
 			}
 		],
@@ -58,5 +58,19 @@ export default [
 				}
 			})
 		]
+	},
+	// react-test-utils
+	{
+		input: `${pkgPath}/test-utils.ts`,
+		output: [
+			{
+				file: `${pkgDistPath}/test-utils.js`,
+				name: 'testUtils',
+				format: 'umd' // 打包成 umd 模块，在 node 和浏览器环境都可用
+			}
+		],
+		// 不要把 react 的代码打包进来
+		external: ['react-dom', 'react'],
+		plugins: [getCommonPlugins()]
 	}
 ];
