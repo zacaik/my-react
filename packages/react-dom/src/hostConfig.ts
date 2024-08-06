@@ -1,14 +1,18 @@
 import { FiberNode } from 'react-reconciler/src/fiber';
 import { HostText } from 'react-reconciler/src/workTag';
+import { updateFiberProps } from './syntheticEvent';
+import { Props } from 'shared/ReactTypes';
+import { DOMElement } from './syntheticEvent';
 
 export type Container = Element;
 export type Instance = Element;
 export type TextInstance = Text;
 
-export const createInstance = (type: string, props: any): Instance => {
+export const createInstance = (type: string, props: Props): Instance => {
 	console.log('props', props);
 	const element = document.createElement(type);
-	return element;
+	updateFiberProps(element as DOMElement, props);
+	return element as DOMElement;
 };
 
 export const appendInitialChild = (
@@ -32,7 +36,6 @@ export const commitUpdate = (fiber: FiberNode) => {
 		case HostText:
 			const text = fiber.memorizedProps.content;
 			return commitTextUpdate(fiber.stateNode, text);
-
 		default:
 			if (__DEV__) {
 				console.log('unexpected commit update tag');
