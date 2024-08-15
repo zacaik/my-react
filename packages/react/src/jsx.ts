@@ -80,8 +80,7 @@ const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 	return ReactElement(type, key, ref, props);
 };
 
-const jsxDEV = (type: ElementType, config: any) => {
-	let key: Key = null;
+const jsxDEV = (type: ElementType, config: any, key: any) => {
 	let ref: Ref = null;
 	const props: Props = {};
 	for (const prop in config) {

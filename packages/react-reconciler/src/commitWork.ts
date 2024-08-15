@@ -1,7 +1,9 @@
 import {
 	Container,
+	Instance,
 	appendChildToContainer,
 	commitUpdate,
+	insertChildToContainer,
 	removeChild
 } from 'hostConfig';
 import { FiberNode } from './fiber';
@@ -53,7 +55,6 @@ export const commitMutationEffects = (finishedWork: FiberNode) => {
 
 const commitMutationEffectOnFiber = (finishedWork: FiberNode) => {
 	const flags = finishedWork.flags;
-
 	if ((flags & Placement) !== NoFlags) {
 		// 如果有 Placement 标记
 		commitPlacement(finishedWork);
@@ -142,15 +143,61 @@ function commitNestedComponent(
 
 const commitPlacement = (finishedWork: FiberNode) => {
 	if (__DEV__) {
-		console.warn('commit Placement');
+		console.warn('commit Placement', finishedWork);
 	}
 
 	const hostParent = getHostParent(finishedWork);
 
+	const sibling = getHostSibling(finishedWork);
+
 	if (hostParent !== null) {
-		appendPlacementNodeIntoContainer(finishedWork, hostParent);
+		insertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent, sibling);
 	}
 };
+
+/**
+ * 获取目标 fiberNode 兄弟 fiberNode 的 hostNode
+ * 如果兄弟 fiberNode 没有直接的对应的宿主节点，则继续向下，访问 child
+ */
+function getHostSibling(fiber: FiberNode) {
+	let node: FiberNode = fiber;
+	findSibling: while (true) {
+		// 如果目标 fiberNode 没有兄弟 fiberNode，则向上查找，访问父级 fiberNode（非 HostComponent、HostRoot）
+		while (node.sibling === null) {
+			const parent = node.return;
+			if (
+				parent === null ||
+				parent.tag === HostComponent ||
+				parent.tag === HostRoot
+			) {
+				// 找到最顶端都没找到，说明父级也没有兄弟节点
+				return null;
+			}
+		}
+		node.sibling.return = node.return;
+		node = node.sibling;
+		while (node.tag !== HostText && node.tag !== HostComponent) {
+			// 向下遍历
+			if ((node.flags & Placement) !== NoFlags) {
+				// 如果当前 sibling 也被打上了 Placement 的标记，证明它也在移动，不应该作为插入的依据
+				// 继续遍历 sibling
+				continue findSibling;
+			}
+			if (node.child === null) {
+				// 如果当前 sibling 没有子节点，则继续遍历 sibling
+				continue findSibling;
+			} else {
+				node.child.return = node;
+				node = node.child;
+			}
+		}
+
+		if ((node.flags & Placement) === NoFlags) {
+			// 找到的第一个 tag 是 HostText 或者 HostComponent，并且稳定的兄弟 hostNode
+			return node.stateNode;
+		}
+	}
+}
 
 // 获取当前 fiberNode 最近的有宿主节点的父节点的宿主节点
 function getHostParent(fiber: FiberNode): Container | null {
@@ -172,22 +219,35 @@ function getHostParent(fiber: FiberNode): Container | null {
 	return null;
 }
 
-function appendPlacementNodeIntoContainer(
+/**
+ * 将目标 fiberNode 下的所有 hostNode 插入到目标宿主节点下
+ * @param finishedWork 目标 fiberNode
+ * @param hostParent 目标宿主节点
+ */
+function insertOrAppendPlacementNodeIntoContainer(
 	finishedWork: FiberNode,
-	hostParent: Container
+	hostParent: Container,
+	before?: Instance
 ) {
 	// fiber host
 	if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
-		appendChildToContainer(hostParent, finishedWork.stateNode);
+		if (before) {
+			/**
+			 * 更新阶段，DOM 结构是已有的，insertBefore 操作其实就是把目标 DOM 移动到 DOM before 前
+			 */
+			insertChildToContainer(finishedWork.stateNode, hostParent, before);
+		} else {
+			appendChildToContainer(hostParent, finishedWork.stateNode);
+		}
 		return;
 	}
 	const child = finishedWork.child;
 	if (child !== null) {
-		appendPlacementNodeIntoContainer(child, hostParent);
+		insertOrAppendPlacementNodeIntoContainer(child, hostParent);
 		let sibling = child.sibling;
 
 		while (sibling !== null) {
-			appendPlacementNodeIntoContainer(sibling, hostParent);
+			insertOrAppendPlacementNodeIntoContainer(sibling, hostParent);
 			sibling = sibling.sibling;
 		}
 	}
