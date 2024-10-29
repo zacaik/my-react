@@ -2,11 +2,12 @@ import { Props, ReactElementType } from 'shared/ReactTypes';
 import {
 	FiberNode,
 	createFiberFromElement,
+	createFiberFromFragment,
 	createWorkInProgress
 } from './fiber';
 import { HostText } from './workTag';
 import { ChildDeletion, Placement } from './fiberFlags';
-import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbol';
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbol';
 
 type ExistingChildren = Map<string | number, FiberNode>;
 
@@ -57,7 +58,12 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 					// 是 react element
 					if (currentFiber.type === element.type) {
 						// type 相同,复用旧节点
-						const existing = useFiber(currentFiber, element.props);
+						let props = element.props;
+						if (element.type === REACT_FRAGMENT_TYPE) {
+							// 对于 Fragment，直接处理其子元素
+							props = element.props.children;
+						}
+						const existing = useFiber(currentFiber, props);
 						existing.return = returnFiber;
 						// 剩余的兄弟节点可以标记为删除
 						deleteRemainingChildren(returnFiber, existing.sibling);
@@ -79,7 +85,12 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 				currentFiber = currentFiber.sibling;
 			}
 		}
-		const fiber = createFiberFromElement(element);
+		let fiber;
+		if (element.type === REACT_FRAGMENT_TYPE) {
+			fiber = createFiberFromFragment(element.props.children, key);
+		} else {
+			fiber = createFiberFromElement(element);
+		}
 		fiber.return = returnFiber;
 		return fiber;
 	}
@@ -227,6 +238,19 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 		currentFiber: FiberNode | null,
 		newChild?: ReactElementType
 	) {
+		// 处理 Fragment
+		// Fragment 作为组件根元素的情况
+		const isUnkeyedTopLevelFragment =
+			typeof newChild === 'object' &&
+			newChild !== null &&
+			newChild.type === REACT_FRAGMENT_TYPE &&
+			newChild.key === null;
+
+		if (isUnkeyedTopLevelFragment) {
+			// 这种情况，不用处理 Fragment，直接处理其 children
+			newChild = newChild?.props.children;
+		}
+
 		if (typeof newChild === 'object' && newChild !== null) {
 			switch (newChild.$$typeof) {
 				case REACT_ELEMENT_TYPE:
@@ -253,7 +277,7 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 
 		if (currentFiber) {
 			// 兜底删除
-			deleteChild(returnFiber, currentFiber);
+			deleteRemainingChildren(returnFiber, currentFiber);
 		}
 
 		// TODO: 多节点场景的实现
