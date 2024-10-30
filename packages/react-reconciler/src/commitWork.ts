@@ -78,21 +78,45 @@ const commitMutationEffectOnFiber = (finishedWork: FiberNode) => {
 	}
 };
 
+/**
+ * 找到所有要删除的 DOM 子树根节点
+ * @param childrenToDelete 要删除的 DOM 子树根节点列表
+ * @param unmountFiber 当前找到的要删除的 DOM 子树根节点
+ */
+function recordHostChildrenToDelete(
+	childrenToDelete: FiberNode[],
+	unmountFiber: FiberNode
+) {
+	const lastOne = childrenToDelete[childrenToDelete.length - 1];
+	if (!lastOne) {
+		childrenToDelete.push(unmountFiber);
+	} else {
+		let node = lastOne.sibling;
+		while (node !== null) {
+			if (unmountFiber === node) {
+				// 只有当 unmountFiber 是最后一个要删除节点的兄弟节点时，才需要真正删除
+				// 如果目标节点是 Fragment，则需要删除所有的子节点
+				// 反之，只需要删除目标节点下的第一个有对应DOM元素的子节点
+				childrenToDelete.push(unmountFiber);
+			}
+			node = node.sibling;
+		}
+	}
+}
+
 function commitDeletion(childToDelete: FiberNode) {
+	// 需要删除的 DOM 子树根节点，因为存在 fragment，所以是一个数组，可能需要删除多个子树根节点
+	const rootChildrenToDelete: FiberNode[] = [];
 	// 根宿主节点
-	let rootHostNode: FiberNode | null = null;
+	// let rootHostNode: FiberNode | null = null;
 	commitNestedComponent(childToDelete, (unmountFiber) => {
 		switch (unmountFiber.tag) {
 			case HostComponent:
-				if (rootHostNode === null) {
-					rootHostNode = unmountFiber;
-				}
+				recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber);
 				// TODO 解绑 ref
 				return;
 			case HostText:
-				if (rootHostNode === null) {
-					rootHostNode = unmountFiber;
-				}
+				recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber);
 				return;
 			case FunctionComponent:
 				// TODO Effect unmount
@@ -104,16 +128,23 @@ function commitDeletion(childToDelete: FiberNode) {
 				return;
 		}
 	});
-	if (rootHostNode !== null) {
+	if (rootChildrenToDelete.length !== 0) {
 		const hostParent = getHostParent(childToDelete);
 		if (hostParent !== null) {
-			removeChild((rootHostNode as FiberNode).stateNode, hostParent);
+			rootChildrenToDelete.forEach((node) => {
+				removeChild(node.stateNode, hostParent);
+			});
 		}
 	}
 	childToDelete.return = null;
 	childToDelete.child = null;
 }
 
+/**
+ * 找到当前要删除的 FiberNode 所有最近的有对应 DOM 元素的子 FiberNode
+ * @param root 要删除的 FiberNode
+ * @param onCommitUnmount 回掉函数，将找到的子 FiberNode 保存到列表中，并过滤掉非最近的子 FiberNode
+ */
 function commitNestedComponent(
 	root: FiberNode,
 	onCommitUnmount: (fiber: FiberNode) => void
@@ -128,6 +159,7 @@ function commitNestedComponent(
 			continue;
 		}
 		if (node === root) {
+			// node 没有 child，结束循环
 			return;
 		}
 		while (node.sibling === null) {

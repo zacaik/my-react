@@ -1,4 +1,4 @@
-import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbol';
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from 'shared/ReactSymbol';
 import {
 	ElementType,
 	Key,
@@ -105,5 +105,7 @@ const jsxDEV = (type: ElementType, config: any, key: any) => {
 	return ReactElement(type, key, ref, props);
 };
 
+const Fragment = REACT_FRAGMENT_TYPE;
+
 // 必须要导出 jsxDEV，开发环境下，jsx 代码会被编译成 import {jsxDEV as _jsx} from 'react/jsx-runtime';
-export { jsx, jsxDEV };
+export { jsx, jsxDEV, Fragment };
