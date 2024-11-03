@@ -265,6 +265,10 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 		}
 
 		if (typeof newChild === 'object' && newChild !== null) {
+			if (Array.isArray(newChild)) {
+				// 如果更新后，有多个子节点，则进入多节点 diff 算法流程
+				return reconcileChildrenArray(returnFiber, currentFiber, newChild);
+			}
 			switch (newChild.$$typeof) {
 				case REACT_ELEMENT_TYPE:
 					return placeSingleChild(
@@ -275,10 +279,6 @@ function ChildReconciler(shouldTrackEffect: boolean) {
 						console.warn('未支持的 ReactElementType', newChild);
 					}
 					break;
-			}
-			if (Array.isArray(newChild)) {
-				// 如果更新后，有多个子节点，则进入多节点 diff 算法流程
-				return reconcileChildrenArray(returnFiber, currentFiber, newChild);
 			}
 		}
 

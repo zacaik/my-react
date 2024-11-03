@@ -80,8 +80,9 @@ const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 	return ReactElement(type, key, ref, props);
 };
 
-const jsxDEV = (type: ElementType, config: any, key: any) => {
+const jsxDEV = (type: ElementType, config: any) => {
 	let ref: Ref = null;
+	let key: Key = null;
 	const props: Props = {};
 	for (const prop in config) {
 		if (Object.prototype.hasOwnProperty.call(config, prop)) {
