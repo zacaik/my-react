@@ -23,17 +23,18 @@ export function createContainer(container: Container) {
 }
 
 /**
- * 在调用 createRoot(root).render(<App />) 时调用该方法进行更新
- * @param element 要更新或渲染的 reactElement
+ * 在调用 createRoot(root).render(<App />) 时调用该方法进行渲染
+ * @param element 要更新或渲染的 ReactElement
  * @param root 对应的 fiberRootNode
  */
 export function updateContainer(
 	element: ReactElementType | null,
 	root: FiberRootNode
 ) {
-	const hostRootFiber = root.current;
+	const hostRootFiber = root.current; // 应用的根 FiberNode
+	// 创建更新对象 { action: element }
 	const update = createUpdate<ReactElementType | null>(element);
-	// 将更新对象添加到更新队列
+	// 将更新对象添加到根 fiberNode 的更新队列
 	enqueueUpdate(
 		hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
 		update

@@ -37,32 +37,37 @@ export const beginWork = (wip: FiberNode) => {
 };
 
 function updateHostRoot(wip: FiberNode) {
-	// 获取更新前的状态
+	// 获取更新前的状态, mount 阶段即为 null
 	const baseState = wip.memorizedState;
+	// hostRootFiber 的 updateQueue 中含有的更新对象，其实对应的就是根组件的 ReactElement
 	const updateQueue = wip.updateQueue as UpdateQueue<ReactElementType>;
+	// 更新对象，即 { action: ReactElement }
 	const pending = updateQueue.shared.pending;
 	updateQueue.shared.pending = null;
-	// 获取更新后的状态
+	// 执行更新对象，获取更新后的状态
 	const { memorizedState } = processUpdateQueue(baseState, pending);
+	// memorizedState 就是根组件的 ReactElement
 	wip.memorizedState = memorizedState;
-
-	const nextChildren = wip.memorizedState; // hostRootFiber 更新后的 state 就是 hostRootFiber 的子节点对应的 ReactElement
-
-	// 现在要把这个 ReactElement 转换成 FiberNode
+	const nextChildren = wip.memorizedState;
+	// 现在要把这个根组件对应的 ReactElement 转换成 FiberNode
 	reconcileChildren(wip, nextChildren);
 
 	return wip.child;
 }
 
 function updateHostComponent(wip: FiberNode) {
+	// 对于 HostComponent 来讲，pendingProps 就是对应的 DOM 元素的子元素的 ReactElement 数组及其绑定的事件
 	const nextProps = wip.pendingProps;
+	// 获取子元素的 ReactElement 列表
 	const nextChildren = nextProps.children;
 	reconcileChildren(wip, nextChildren);
 	return wip.child;
 }
 
 function updateFunctionComponent(wip: FiberNode) {
+	// 获取函数的执行结果，拿到函数组件返回的 ReactElement
 	const nextChildren = renderWithHooks(wip);
+	// 给函数组件返回的 ReactElement 创建 FiberNode
 	reconcileChildren(wip, nextChildren);
 	return wip.child;
 }
@@ -77,9 +82,12 @@ function reconcileChildren(wip: FiberNode, children?: ReactElementType) {
 
 	if (current !== null) {
 		// update
+		// 如果 wip 是 HostRootFiber，mount 阶段也会进入到这个流程，mount 阶段，wip 的 alternate 就是当前的 HostRootFiber，肯定是不为 null 的
+		// 因为要挂载首屏 DOM 树，所以会对根组件对应的 FiberNode 打上 Place 的标记
 		wip.child = reconcileChildrenFibers(wip, current.child, children);
 	} else {
 		// mount
+		// 非 HostRootFiber 的 FiberNode 在 mount 阶段，会进入到这个流程
 		wip.child = mountChildFibers(wip, null, children);
 	}
 }

@@ -81,6 +81,7 @@ const jsx = (type: ElementType, config: any, ...maybeChildren: any) => {
 };
 
 const jsxDEV = (type: ElementType, config: any) => {
+	// 对于根 React 组件来讲，type 就是根 React 组件，即 App 函数本身。
 	let ref: Ref = null;
 	let key: Key = null;
 	const props: Props = {};

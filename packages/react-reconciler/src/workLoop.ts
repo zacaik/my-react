@@ -15,12 +15,15 @@ let workInProgress: FiberNode | null = null;
 export function scheduleUpdateOnFiber(fiber: FiberNode) {
 	// react 的协调阶段总是从 fiberRootNode 开始的
 	const root = markUpdateFromFiberToRoot(fiber);
-	// TODO: 协调阶段具体怎么执行
 	if (root) {
+		// 以 FiberRootNode 为起点，执行整个 React App 的更新和渲染
 		renderRoot(root);
 	}
 }
 
+/**
+ * 以传入的 FiberNode 为起点，向上遍历，找到应用程序的 FiberRootNode
+ */
 function markUpdateFromFiberToRoot(fiber: FiberNode): FiberRootNode | null {
 	let node = fiber;
 	let parent = node.return;
