@@ -205,6 +205,7 @@ function getHostSibling(fiber: FiberNode) {
 				// 找到最顶端都没找到，说明父级也没有兄弟节点
 				return null;
 			}
+			node = parent;
 		}
 		node.sibling.return = node.return;
 		node = node.sibling;
